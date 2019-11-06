@@ -67,8 +67,8 @@ void EnemyBase::initEnemy(int index /* = 1*/) {
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 pos = Vec2(this->getContentSize().width/2+
 		CCRANDOM_0_1()*(visibleSize.width - this->getContentSize().width),
-		this->getContentSize().height*5
-		+CCRANDOM_0_1()*(visibleSize.height - this->getContentSize().height*5));
+		this->getContentSize().height*8
+		+CCRANDOM_0_1()*(visibleSize.height - this->getContentSize().height*8));
 	//Vec2 pos = Vec2(visibleSize.width / 2, visibleSize.height / 2);
 	this->setPosition(pos);
 	this->scheduleUpdate();

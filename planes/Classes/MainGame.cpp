@@ -151,7 +151,7 @@ void MainGame::init_hero_plane(int index) {
 	//创建飞机精灵
 	hero_player_ = Sprite::create(String::createWithFormat("plane/heros%d_1.png", index)->getCString());
 	auto visibleSize = Director::getInstance()->getVisibleSize();
-	hero_player_->setPosition(Vec2(visibleSize.width / 2, visibleSize.height*0.2));
+	hero_player_->setPosition(Vec2(visibleSize.width / 2, hero_player_->getContentSize().height*2));
 	this->addChild(hero_player_);
 	hero_player_->runAction(Animate::create(animation));
 }
