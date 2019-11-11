@@ -22,52 +22,23 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __MainGame_H__
-#define __MainGame_H__
+#ifndef __SuspandLayer_H__
+#define __SuspandLayer_H__
 
 #include "cocos2d.h"
-#include "PlaneSupport.h"
-USING_NS_CC;
-class MainGame : public cocos2d::Layer
+
+class SuspandLayer : public cocos2d::Layer
 {
 public:
-	Sprite * spr_bg1_;
-	Sprite * spr_bg2_;
-	Sprite * hero_player_;
-	int support_index_;
-	PlaneSupport* plane_support_;
-public:
-    static Scene* createScene();
+    static cocos2d::Scene* createScene();
 
     virtual bool init();
-	void onEnterTransitionDidFinish();
-	void onExit();
-
-	void update(float delta);
+    //开始按钮回调
+	void startPlay(Ref * ref);
+   
     
-	//单点触摸方法
-	bool onTouchBegan(Touch *touch, Event *unused_event);
-	void onTouchMoved(Touch *touch, Event * unused_event);
-	//暂停方法
-	void suspend(Ref* ref);
-	//初始化玩家飞机
-	void init_hero_plane(int index);
-	
-	void hero_death();
-	void hero_player_action_end();
-	//添加敌机
-	void add_enemy(float delta);
-	//添加子弹
-	void add_bullet(float tm);
-	//添加物资
-	void  add_support(float tm);
-	//获得资源物资后子弹的效果
-	void add_support_bullet(float tm);
-
-	//碰撞检测
-	void is_crash(float tm);
     // implement the "static create()" method manually
-    CREATE_FUNC(MainGame);
+    CREATE_FUNC(SuspandLayer);
 };
 
-#endif // __MainGame_SCENE_H__
+#endif // __SuspandLayer_SCENE_H__
