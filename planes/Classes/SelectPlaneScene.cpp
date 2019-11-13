@@ -22,56 +22,47 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __MainGame_H__
-#define __MainGame_H__
+#include "SelectPlaneScene.h"
+#include "SelectPlaneLayer.h"
+#include "SelectPlanePage.h"
+#include "SimpleAudioEngine.h"
 
-#include "cocos2d.h"
-#include "PlaneSupport.h"
 USING_NS_CC;
-class MainGame : public cocos2d::Layer
+
+Scene* SelectPlaneScene::createScene()
 {
-public:
-	Sprite * spr_bg1_;
-	Sprite * spr_bg2_;
-	Sprite * hero_player_;
-	int support_index_;//支援物资的类型
-	PlaneSupport* plane_support_;//支援物资
-	int score_;//当前分数
-	Label* label_score_num_;
-	Label* label_best_score_num_;
-	int plane_type_;
-public:
-    static Scene* createScene();
+    return SelectPlaneScene::create();
+}
 
-    virtual bool init();
-	void onEnterTransitionDidFinish();
-	void onExit();
 
-	void update(float delta);
+// on "init" you need to initialize your instance
+bool SelectPlaneScene::init()
+{
+    //////////////////////////////
+    // 1. super init first
+    if ( !Scene::init() )
+    {
+        return false;
+    }
+
+    auto size = Director::getInstance()->getWinSize();
     
-	//单点触摸方法
-	bool onTouchBegan(Touch *touch, Event *unused_event);
-	void onTouchMoved(Touch *touch, Event * unused_event);
-	//暂停方法
-	void suspend(Ref* ref);
-	//初始化玩家飞机
-	void init_hero_plane(int index);
-	
-	void hero_death();
-	void hero_player_action_end();
-	//添加敌机
-	void add_enemy(float delta);
-	//添加子弹
-	void add_bullet(float tm);
-	//添加物资
-	void  add_support(float tm);
-	//获得资源物资后子弹的效果
-	void add_support_bullet(float tm);
+	//添加可滑动界面
+	SelectPlaneLayer* scrollView = SelectPlaneLayer::create();
+	//关卡1-3
+	for (int i = 1; i <= 3; i++) {
+		auto page = SelectPlanePage::create(i);
+		page->setTag(i);
+		scrollView->addNode(page);
+	}
+	auto spritebg = Sprite::create("ui/bg_select.png");
+	spritebg->setPosition(Vec2(size.width/2,size.height/2));
+	addChild(spritebg);
 
-	//碰撞检测
-	void is_crash(float tm);
-    // implement the "static create()" method manually
-    CREATE_FUNC(MainGame);
-};
 
-#endif // __MainGame_SCENE_H__
+	this->addChild(scrollView);
+    return true;
+}
+
+
+

@@ -25,6 +25,7 @@
 #include "StartGame.h"
 #include "MainGame.h"
 #include "SimpleAudioEngine.h"
+#include "SelectPlaneScene.h"
 
 USING_NS_CC;
 
@@ -100,6 +101,7 @@ bool StartGame::init()
     return true;
 }
 void StartGame::startPlay(Ref * ref) {
-	Director::getInstance()->replaceScene(TransitionFadeTR::create(0.5, MainGame::createScene()));
+	//Director::getInstance()->replaceScene(TransitionFadeTR::create(0.5, MainGame::createScene()));
+	Director::getInstance()->replaceScene(TransitionFadeTR::create(0.5, SelectPlaneScene::createScene()));
 }
 

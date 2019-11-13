@@ -30,6 +30,7 @@
 #include "ManagerBase.h"
 #include "PlaneSupport.h"
 #include "SuspandLayer.h"
+#include "GameOver.h"
 USING_NS_CC;
 
 Scene* MainGame::createScene()
@@ -56,6 +57,8 @@ bool MainGame::init()
         return false;
     }
 	plane_support_ = NULL;
+	//plane_type_ = 1;
+	score_ = 0;
 
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
@@ -74,7 +77,9 @@ bool MainGame::init()
 
 	scheduleUpdate();
 	//初始化飞机
-	init_hero_plane(1);
+	//log("this tag %d", this->getTag());
+	plane_type_ = UserDefault::getInstance()->getIntegerForKey("plane_type", 1);
+	init_hero_plane(plane_type_);
 
 	//添加暂停*********************************************************************/
 	//添加menu
@@ -89,7 +94,43 @@ bool MainGame::init()
 		visibleSize.height - btn_label->getContentSize().height / 2-5));
 	this->addChild(menu);
 
-	//添加暂停*********************************************************************/
+	//分数设置*********************************************************************/
+	//分数标签
+	auto label_score = Label::create();
+	label_score->setString(((String*)(dictionnary->objectForKey("score")))->getCString());
+	label_score->setSystemFontSize(40);
+	label_score->setAnchorPoint(Vec2(0.5, 0.5));
+	label_score->setPosition(Vec2(label_score->getContentSize().width / 2+2,
+		visibleSize.height - label_score->getContentSize().height/2));
+	this->addChild(label_score);
+	//最高分标签
+	auto label_best_score = Label::create();
+	label_best_score->setString(((String*)(dictionnary->objectForKey("best_score")))->getCString());
+	label_best_score->setSystemFontSize(40);
+	label_best_score->setAnchorPoint(Vec2(0.5, 0.5));
+	label_best_score->setPosition(Vec2(label_best_score->getContentSize().width / 2 + 2,
+		visibleSize.height - label_score->getContentSize().height - label_best_score->getContentSize().height/2));
+	this->addChild(label_best_score);
+	//当前分标签
+	label_score_num_ = Label::create();
+	label_score_num_->setSystemFontSize(30);
+	label_score_num_->setAnchorPoint(Vec2(0, 0.5));
+	label_score_num_->setPosition(Vec2(label_score->getContentSize().width + 10, label_score->getPositionY()));
+	this->addChild(label_score_num_);
+	//最高分标签
+	label_best_score_num_ = Label::create();
+	label_best_score_num_->setSystemFontSize(30);
+	label_best_score_num_->setAnchorPoint(Vec2(0, 0.5));
+	label_best_score_num_->setPosition(Vec2(label_best_score->getContentSize().width + 10, label_best_score->getPositionY()));
+	this->addChild(label_best_score_num_);
+
+	//设置最高分
+	int score_win = UserDefault::getInstance()->getIntegerForKey("best_score", 0);
+	label_best_score_num_->setString(String::createWithFormat("%d",score_win)->getCString());
+	//设置当前分
+	label_score_num_->setString(String::createWithFormat("%d", score_)->getCString());
+	//-------------------------------------分数end----------------------------------------------------
+
 	//单点触摸监听器
 	auto m_touchListener = EventListenerTouchOneByOne::create();
 	m_touchListener->onTouchBegan = CC_CALLBACK_2(MainGame::onTouchBegan, this);
@@ -115,6 +156,13 @@ void MainGame::onEnterTransitionDidFinish(){
 }
 void MainGame::hero_death()
 {
+	//存储分数变量
+	UserDefault::getInstance()->setIntegerForKey("score", score_);
+	int best_score = UserDefault::getInstance()->getIntegerForKey("best_score",0);
+	if (score_  > best_score) {
+		UserDefault::getInstance()->setIntegerForKey("best_score", score_);
+	}
+	//
 	hero_player_->stopAllActions();
 	this->unschedule(SEL_SCHEDULE(&MainGame::add_bullet));
 	this->unschedule(SEL_SCHEDULE(&MainGame::is_crash));
@@ -136,8 +184,14 @@ void MainGame::hero_player_action_end()
 {
 	this->unschedule(SEL_SCHEDULE(&MainGame::add_enemy));
 	hero_player_->removeFromParentAndCleanup(true);//从场景中移除，没有父对象它就会被加入到对象回收池删除
+
+	//清空管理器中的敌机和子弹,否则当死亡后再次进入游戏场景会立即死亡。
+	auto &enemy_list = ManagerBase::getInstance()->getEnemyList();
+	auto &bullet_list = ManagerBase::getInstance()->getBulletList();
+	enemy_list.clear();
+	bullet_list.clear();
 	//回到主题界面
-	Director::getInstance()->replaceScene(TransitionFadeTR::create(0.5, StartGame::createScene()));
+	Director::getInstance()->replaceScene(TransitionFadeTR::create(1.0f, GameOver::createScene()));
 }
 void MainGame::onExit() {
 	unscheduleUpdate();
@@ -161,10 +215,12 @@ void MainGame::update(float delta) {
 }
 
 void MainGame::init_hero_plane(int index) {
+	//记录选择的飞机的类型
+	plane_type_ = index;
 	//添加动画
 	auto animation = Animation::create();
-	for (int i = 0; i < 2; i++) {
-		auto str_name = String::createWithFormat("plane/heros%d_%d.png", index, i + 1);
+	for (int i = 1; i <= 2; i++) {
+		auto str_name = String::createWithFormat("plane/heros%d_%d.png", index, i);
 		animation->addSpriteFrameWithFile(str_name->getCString());
 	}
 	animation->setDelayPerUnit(0.5);
@@ -261,7 +317,12 @@ void MainGame::add_enemy(float delta) {
 }
 void  MainGame::add_bullet(float tm) {
 	auto bullet = Bullet::create();
-	bullet->initBullet("bullet1.png");
+	if(plane_type_ == 1)
+		bullet->initBullet("bullet1.png");
+	if (plane_type_ == 2)
+		bullet->initBullet("bullet2.png");
+	if (plane_type_ == 3)
+		bullet->initBullet("bullet3.png");
 
 	auto point = Vec2(hero_player_->getPositionX(),
 		hero_player_->getPositionY()+hero_player_->getContentSize().height/2 +10);
@@ -328,6 +389,8 @@ void MainGame::is_crash(float tm)
 				//如果敌机血量为0播放爆炸，为什么不从list中移除
 				if (enemy->get_hp() <= 0) {
 					enemy->enemy_death();
+					score_ += 10;
+					label_score_num_->setString(String::createWithFormat("%d", score_)->getCString());
 				}
 			}
 		}
@@ -365,8 +428,7 @@ void MainGame::is_crash(float tm)
 			plane_support_->removeFromParent();
 			plane_support_ = NULL;
 		}
-	}
-	
+	}	
 }
 
 
