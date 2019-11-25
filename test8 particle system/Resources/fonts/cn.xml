@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<dict>
+<key>scene1</key>
+<string>精灵帧动画</string>
+<key>scene2</key>
+<string>打火机</string>
+<key>scene3</key>
+<string>内置粒子系统</string>
+<key>scene4</key>
+<string>自定义粒子系统code</string>
+<key>scene5</key>
+<string>自定义粒子系统plist</string>
+</dict>
