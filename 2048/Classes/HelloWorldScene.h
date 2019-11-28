@@ -50,6 +50,8 @@ public:
 	bool doRight();
 	bool doUp();
 	bool doDown();
+	//自动卡片生成
+	void autoCreateCardNumber();
 };
 
 #endif // __HELLOWORLD_SCENE_H__

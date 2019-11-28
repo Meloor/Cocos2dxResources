@@ -63,16 +63,21 @@ bool HelloWorld::init()
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);
 	//添加卡片
 	createCards(visibleSize);
+
+	//生成随机数
+	autoCreateCardNumber();
+	autoCreateCardNumber();
 }
 void  HelloWorld::createCards(Size size) {
 	//求出单元格高度
 	float lon = (size.width - 20) / 4;//左右方向多出20像素
 	//布局好card后剩余的高度
 	float rest_height = size.height - lon * 4;
-	int arr[4][4] = {{2,2,4,8},
-					{ 0,2,4,8 },
-					{ 0,2,4,8 },
-					{ 0,0,4,8 }};
+	//int arr[4][4] = {{2,2,4,8},
+	//				{ 0,2,4,8 },
+	//				{ 0,2,4,8 },
+	//				{ 0,0,4,8 }};
+	int arr[4][4] = {0};
 	//4*4的单元格,（x,y）索引card,同opengl坐标系
 	for (int x = 0; x < 4; x++) {
 		for (int y = 0; y < 4; y++) {
@@ -102,18 +107,22 @@ void  HelloWorld::onTouchEnded(Touch *touch, Event *unused_event) {
 	//如果x方向上的移动距离大于y方向上的移动距离，则是左右移动，否则上下移动
 	if (abs(endX) > abs(endY)) {
 		if (endX + 5 > 0) {//first在end右边，向左滑
-			doLeft();
+			if(doLeft())
+				autoCreateCardNumber();
 		}
 		else {
-			doRight();
+			if(doRight())
+				autoCreateCardNumber();
 		}
 	}
 	else {//opengl坐标系原点在左下角,越往上坐标越大
 		if (endY + 5 > 0) {//first在end的上边，向下滑，这里为什么要+5？？？
-			doDown();
+			if(doDown())
+				autoCreateCardNumber();
 		}
 		else {
-			doUp();
+			if(doUp())
+				autoCreateCardNumber();
 		}
 	}
 }
@@ -293,4 +302,17 @@ bool  HelloWorld::doDown() {
 		}
 	}
 	return true;
+}
+
+void HelloWorld::autoCreateCardNumber()
+{
+	int y, x;
+	do {
+		y = CCRANDOM_0_1() * 4;//[0,1]*4 ->[0,4],
+		x = CCRANDOM_0_1() * 4;
+		if (y == 4)y = 3;//如果刚好等于4就会出错
+		if (x == 4)x = 3;
+	} while (cardArr[y][x]->getNumber() > 0);//如果改格子非空就继续随机下一个点
+
+	cardArr[y][x]->setNumber(CCRANDOM_0_1() * 10 < 1 ? 4 : 2);//4的概率约10%
 }
