@@ -83,7 +83,7 @@ void  HelloWorld::createCards(Size size) {
 			card->setPosition(Vec2(lon*x + 10, size.height-lon*y - rest_height / 2-lon));//(0,0)在左上角
 			this->addChild(card);
 			//添加卡片到二维数组中
-			cardArr[x][y] = card;//保证遍历x就是遍历左右方向的格子就行。
+			cardArr[y][x] = card;//保证遍历x就是遍历左右方向的格子就行。
 		}
 	}
 }
@@ -116,7 +116,6 @@ void  HelloWorld::onTouchEnded(Touch *touch, Event *unused_event) {
 			doUp();
 		}
 	}
-
 }
 
 bool  HelloWorld::doLeft() {
@@ -125,71 +124,173 @@ bool  HelloWorld::doLeft() {
 	理一下游戏的逻辑，往左划时
 	step1:所有的card都会往左移（跳过值为0的card),在左边互相紧靠。
 	step2:肯定是左边的先合并，如果有相同的就合并，合并后又会有空card,空card后面的card要填补空card的位置。
+	先移动，再合并:
+	4202->4220->4400->8000, 移动阶段：从左往右遍历，如果格子非空且其左边为空，就把格子向左移动一个
+	4002->移动阶段：
+	0204->移动阶段：从左往右遍历，如果格子a为空，那么从这个格子往右找，直到找到一个非空的格子b，然后a=b,b=0，继续往右找下一个空的格子。
+	4220->合并阶段：此时所有格子都在左边相邻，从左往右遍历，有一对相同的就合并->4400,之后可能在左边会出现新的可合并格子对，所以需要重新从左边找起
+	4220->4400->8000
+	4420->8200
+	4422->8220->8400->
+	2222->4220->4400->8000
+	2222合并->4022移动->4220合并->4400合并->8000, 合并之后不需要立马移动，因为后面还可能出现可合并对
+	2222合并->4022合并->4040移动->4400合并->8000
+	可以这样，合并时忽略空格，直到没有可合并的才做最后的移动
+	
+	
 	*/
-	bool isdo = false;
-	for (int y = 0; y < 4; y++) {
-		//bool flag = true;
-		//while (flag) {
-		//	int x_num = 4;
-		//	for (int x = 0; x < x_num; x++) {
-		//		//如果这个格子为空，后面的都往前移
-		//		if (cardArr[x][y]->getNumber() == 0) {
-		//			for (int x1 = x + 1; x1 < x_num; x1++) 
-		//				cardArr[x1 - 1][y]->setNumber(cardArr[x1][y]->getNumber());		
-		//			cardArr[3][y]->setNumber(0);
-		//			x_num--;//移动后，最后一个是空，后面无需再判断了
-		//		}
-		//		//如果格子非空，那么判断合并，用if而不用else是因为移动后可能非空
-		//		if(cardArr[x][y]->getNumber() != 0){
-		//			for (int x1 = x + 1; x1 < x_num; x1++) {
-		//				if (cardArr[x][y]->getNumber() == cardArr[x1][y]->getNumber()) {
-		//					cardArr[x][y]->setNumber(cardArr[x][y]->getNumber() * 2);
-		//					cardArr[x1][y]->setNumber(0);
-		//				}
-		//				else break;//不相等就啥也不做
-		//			}
-		//		}
-		//	}
-		//}
+	int isdo_num = 0;
+	for (int y = 0; y < 4; y++) {//遍历每一行
+		/*
+		x = 0:2222->4022	2248->4048->8008->16000
+		x = 2:4022->4040	
+		x = 0:8000
+		
+		*/	
+		bool isdo = false;
+		do{//最多就合并三次，时间复杂度最坏O(16*3);
+			isdo = false;
+			for (int x = 0; x < 4; x++) {
+				if (cardArr[y][x]->getNumber() > 0) {//非空格子x
+					for (int nx = x + 1; nx < 4; nx++) {//找下一个非空且和x相同的格子
+						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[y][nx]->setNumber(0);
+							isdo = true;
+							isdo_num++;
+						}
+					}
+				}
+			}
+		}while (isdo);//如果能合并就继续，不能再合并了就退出
 
-
-		for (int x = 0; x < 4; x++) {//合并到x
-			//遍历到x,card从右往前移，与x最近的(x+1)先和x进行迭代判断
-			//判断到底是要进行迭代还是清空
-			for (int x1 = x + 1; x1 < 4; x1++) {//x1是被合并的格子
-				if (cardArr[x1][y]->getNumber()>0) {//x1非空
-					//x为空，x1移动到x的位置，x1原位置置空
-					//例子，x=0,x1=1,[0,2,2,2],向左滑动后[2,0,2,2],x1=2,[4,0,0,2],x1=3,[4,0,0,2]
-					//x为空只会在里层for中出现一次，第一次过后就会被设置为非空。
-					if (cardArr[x][y]->getNumber() <= 0) {
-						cardArr[x][y]->setNumber(cardArr[x1][y]->getNumber());
-						cardArr[x1][y]->setNumber(0);
-						//x--;//然后下一个x1判断时会读取cardArr[-1][y]产生中断，如[0,2,4,8]
-						//log("x=%d", x);		
-						isdo = true;
-					}//x非空，判断是否与x相同,相同则合并到x
-					else if(cardArr[x][y]->getNumber() == cardArr[x1][y]->getNumber()){
-						cardArr[x][y]->setNumber(cardArr[x][y]->getNumber()*2);
-						//合并到x后，x1置为空，然后下一个x1与x进行判断，如果相同会继续合并
-						//如[2,2,4,4]合并的最终结果为[8,0,0,4]
-						cardArr[x1][y]->setNumber(0);
-						isdo = true;
-					}//x非空且和x1不同，什么都不做，x1停在原处
-				}//x1为空什么都不做
+		//移动
+		/*	从左往右遍历，如果格子a为空，那么从这个格子往右找，直到找到一个非空的格子b，
+			然后a = b, b = 0，继续往右找下一个空的格子。
+		*/
+		for (int x = 0; x < 4; x++) {
+			if (cardArr[y][x]->getNumber()==0) {//找一个空格
+				for (int nx = x + 1; nx < 4; nx++) {
+					if (cardArr[y][nx]->getNumber() > 0) {//找一个非空
+						cardArr[y][x]->setNumber(cardArr[y][nx]->getNumber());
+						cardArr[y][nx]->setNumber(0);
+						break;//空格被填充后直接break
+					}
+				}
 			}
 		}
 	}
-	return isdo;
+	return isdo_num>0;//合并过
 }
 bool  HelloWorld::doRight() {
 	log("go right");
+	int isdo_num = 0;
+	for (int y = 0; y < 4; y++) {//遍历每一行
+		//合并
+		bool isdo = false;
+		do {//最多就合并三次，时间复杂度最坏O(16*3);
+			isdo = false;
+			for (int x = 3; x >=0; x--) {
+				if (cardArr[y][x]->getNumber() > 0) {//非空格子x
+					for (int nx = x - 1; nx>=0; nx--) {//找下一个非空且和x相同的格子
+						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[y][nx]->setNumber(0);
+							isdo = true;
+							isdo_num++;
+						}
+					}
+				}
+			}
+		} while (isdo);//如果能合并就继续，不能再合并了就退出
+		//移动
+		for (int x = 3; x >=0; x--) {
+			if (cardArr[y][x]->getNumber() == 0) {//找一个空格
+				for (int nx = x - 1; nx >=0; nx--) {
+					if (cardArr[y][nx]->getNumber() > 0) {//找一个非空
+						cardArr[y][x]->setNumber(cardArr[y][nx]->getNumber());
+						cardArr[y][nx]->setNumber(0);
+						break;//空格被填充后直接break
+					}
+				}
+			}
+		}
+	}
 	return true;
 }
 bool  HelloWorld::doUp() {
 	log("go up");
+	int isdo_num = 0;
+	for (int x = 0; x < 4; x++) {//遍历每一列
+		/*合并*/
+		bool isdo = false;
+		do {//最多就合并三次，时间复杂度最坏O(16*3);
+			isdo = false;
+			for (int y = 0; y < 4; y++) {
+				if (cardArr[y][x]->getNumber() > 0) {//非空格子y
+					for (int ny = y + 1; ny < 4; ny++) {//找下一个非空且和y相同的格子
+						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[ny][x]->setNumber(0);
+							isdo = true;
+							isdo_num++;
+						}
+					}
+				}
+			}
+		} while (isdo);//如果能合并就继续，不能再合并了就退出
+		/*移动*/
+		for (int y = 0; y < 4; y++) {
+			if (cardArr[y][x]->getNumber() == 0) {//找一个空格
+				for (int ny = y + 1; ny < 4; ny++) {
+					if (cardArr[ny][x]->getNumber() > 0) {//找一个非空
+						cardArr[y][x]->setNumber(cardArr[ny][x]->getNumber());
+						cardArr[ny][x]->setNumber(0);
+						break;//空格被填充后直接break
+					}
+				}
+			}
+		}
+	}
 	return true;
 }
 bool  HelloWorld::doDown() {
 	log("go down");
+	int isdo_num = 0;
+	for (int x = 0; x < 4; x++) {//遍历每一列
+		//合并
+		bool isdo = false;
+		do {//最多就合并三次，时间复杂度最坏O(16*3);
+			isdo = false;
+			for (int y = 3; y >=0; y--) {
+				if (cardArr[y][x]->getNumber() > 0) {//非空格子y
+					for (int ny = y - 1; ny >=0; ny--) {//找下一个非空且和y相同的格子
+						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[ny][x]->setNumber(0);
+							isdo = true;
+							isdo_num++;
+						}
+					}
+				}
+			}
+		} while (isdo);//如果能合并就继续，不能再合并了就退出
+		//移动
+		for (int y = 3;y>=0; y--) {
+			if (cardArr[y][x]->getNumber() == 0) {//找一个空格
+				for (int ny = y-1; ny >=0; ny--) {
+					if (cardArr[ny][x]->getNumber() > 0) {//找一个非空
+						cardArr[y][x]->setNumber(cardArr[ny][x]->getNumber());
+						cardArr[ny][x]->setNumber(0);
+						break;//空格被填充后直接break
+					}
+				}
+			}
+		}
+	}
 	return true;
 }
