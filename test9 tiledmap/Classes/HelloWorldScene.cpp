@@ -64,22 +64,23 @@ bool HelloWorld::init()
 	ValueMap originPoint = objects->getObject("originPoint");//通过对象名获得对象
 
 	//设置地图偏移
-	ox = originPoint["x"].asFloat();//获得对象的x轴
-	oy = originPoint["y"].asFloat();//获得对象的y轴坐标，已经转换成了opengl坐标，即该对象的左下角在map中的opengl坐标
-	log("originPoint(%f,%f)", ox, oy);//256,1632
-	myMap->setPosition(Vec2(-ox, -oy));
-	//this->setPosition(ox, oy);//移动视点（默认是原点（0,0））
-	//this->setViewPointCenter(Vec2(-ox, -oy));
+	//获得对象在地图上的opengl坐标
+	//即该对象的左下角在map中的opengl坐标
+	float ox = originPoint["x"].asFloat();
+	float oy = originPoint["y"].asFloat();
+	//log("originPoint(%f,%f)", ox, oy);
+	//移动层，而场景是没有变的，层上的地图和精灵会跟着移动
+	this->setPosition(-ox, -oy);
 	this->addChild(myMap);
 
 	//根据player对象位置设置精灵位置
-	float x = player["x"].asFloat();//获得对象的x轴
-	float y = player["y"].asFloat();//获得对象的y轴
-	log("player(x=%f,y=%f)\n", x, y);
+	float x = player["x"].asFloat();//获得对象的x轴坐标
+	float y = player["y"].asFloat();//获得对象的y轴坐标
+	//log("player(x=%f,y=%f)\n", x, y);
 	playerSprite = Sprite::create("player.png");//场景中放置精灵
-	playerSprite->setPosition(Vec2(x-ox, y-oy));//精灵的位置放到对象的位置
-	playerSprite->setAnchorPoint(Vec2(0, 0));//对象的位置是其左下角，所以精灵的锚点也应该设置成左下角
-	playerSprite->setAnchorPoint(Vec2(0, 1));//为什么是左上角呢
+	playerSprite->setPosition(Vec2(x, y));//精灵的位置放到对象的位置
+	//对象的位置是其左下角，所以精灵的锚点也应该设置成左下角
+	playerSprite->setAnchorPoint(Vec2(0, 0));
 	this->addChild(playerSprite);
 
 	//获取障碍层
@@ -97,38 +98,49 @@ void   HelloWorld::onTouchMoved(Touch* touch, Event* envent) {
 	//log("touch moved");
 }
 void   HelloWorld::onTouchEnded(Touch* touch, Event* envent) {
-	Vec2 touchp = touch->getLocation();//获取触摸点的opengl坐标
-	Vec2 playerp = playerSprite->getPosition();//精灵在屏幕上的opengl坐标
-	Vec2 diff = touchp - playerp;//触点与角色之间的距离差
+	Vec2 touchp = touch->getLocation();//获取触摸点的opengl屏幕坐标
+	Vec2 touchInLayer = touchp - this->getPosition();//触摸点在层上的opengl坐标
+	//log("touch pos(%f,%f)", touchp.x, touchp.y);
+	Vec2 playerp = playerSprite->getPosition();//精灵在层上的opengl坐标
+	//log("player pos(%f,%f)", playerp.x, playerp.y);
+	Vec2 diff = touchInLayer - playerp;//触点与角色之间的距离差
+	offset = Vec2(0, 0);//每次移动的偏移值，如果没有移动就是0
 	if (abs(diff.x) > abs(diff.y)) {
 		if (diff.x > 0) {
-			playerp.x += myMap->getTileSize().width;//每次只移动一格
+			log("go right");
+			offset.x = myMap->getTileSize().width;//每次只移动一格
 			playerSprite->runAction(FlipX::create(FALSE));
 		}
 		else {
-			playerp.x -= myMap->getTileSize().width;
+			log("go left");
+			offset.x = -myMap->getTileSize().width;
 			playerSprite->runAction(FlipX::create(TRUE));
 		}
 	}
 	else {
-		if (diff.y > 0)
-			playerp.y += myMap->getTileSize().height;
-		else playerp.y -= myMap->getTileSize().height;
+		if (diff.y > 0) {
+			offset.y = myMap->getTileSize().height;
+			log("go up");
+		}
+		else {
+			offset.y = -myMap->getTileSize().height;
+			log("go down");
+		}
 	}
-	//playerSprite->setPosition(playerp.x, playerp.y);
-	this->setPlayerPos(playerp);//触摸结束后设置精灵位置
+	//触摸结束后设置精灵在层中的位置（带碰撞检测）
+	this->setPlayerPos(playerp+offset);
 }
-
-Vec2 HelloWorld::tileCoordFromPosition(Vec2 pos)//pos为触摸点的opengl坐标
+//触摸点在层上的opengl坐标坐标转换成瓦片坐标
+//pos为触摸点在层上的opengl坐标，其原点为层的原点
+Vec2 HelloWorld::tileCoordFromPosition(Vec2 pos)
 {
 	//地图y轴瓦片总数乘以每个瓦片的高度得到地图的y轴总高度
 	int mpy = myMap->getMapSize().height * myMap->getTileSize().height;
-	int mpx = myMap->getMapSize().width * myMap->getTileSize().width;
 
-	//转换成在地图的opengl像素坐标，因为地图的原点不是屏幕原点
-	Vec2 posInMap = Vec2(pos.x + ox, pos.y + oy);
+	//转换成在地图的opengl像素坐标。现在层的原点也是地图的opengl原点。
+	Vec2 posInMap = Vec2(pos.x, pos.y);
 	//转换成在地图的UI像素坐标（原点在左上角）
-	Vec2 posInMapUI = Vec2(pos.x + ox, mpy- (pos.y + oy));
+	Vec2 posInMapUI = Vec2(pos.x, mpy-pos.y );
 	
 	//转换成瓦片坐标
 	int x = posInMapUI.x / myMap->getTileSize().width;
@@ -136,7 +148,8 @@ Vec2 HelloWorld::tileCoordFromPosition(Vec2 pos)//pos为触摸点的opengl坐标
 	return Vec2(x,y);
 }
 
-void HelloWorld::setPlayerPos(Vec2 pos)//pos为精灵在屏幕上的opengl坐标
+//碰撞检测
+void HelloWorld::setPlayerPos(Vec2 pos)//pos为精灵在层上的opengl坐标,
 {
 	Vec2 tilePos = this->tileCoordFromPosition(pos);//转换成瓦片坐标以方便判断
 	int tileGid = coLayer->getTileGIDAt(tilePos);
@@ -147,27 +160,43 @@ void HelloWorld::setPlayerPos(Vec2 pos)//pos为精灵在屏幕上的opengl坐标
 			SimpleAudioEngine::getInstance()->playEffect("empty.wav");
 			return;
 		}
-	}
+	}	
 	playerSprite->setPosition(pos);
-	this->setViewPointCenter(playerSprite->getPosition());
+	this->setViewPointCenter(pos);//精灵真正移动后才会移动层
 }
-
-void HelloWorld::setViewPointCenter(Vec2 pos)//这个点是目标点
+//移动Layer保证player尽量位于屏幕中心
+void HelloWorld::setViewPointCenter(Vec2 pos)//pos是精灵在层上的opengl坐标
 {
 	//地图y轴瓦片总数乘以每个瓦片的高度得到地图的y轴总高度
 	int mpy = myMap->getMapSize().height * myMap->getTileSize().height;
 	int mpx = myMap->getMapSize().width * myMap->getTileSize().width;
 
 	Size visibleSize = Director::getInstance()->getVisibleSize();
-	//x坐标不能小于屏幕坐标的一半
-	int x = MAX(pos.x, visibleSize.width / 2);
-	int y = MAX(pos.y, visibleSize.height / 2);
-	x = MIN(x,mpx - visibleSize.width / 2);
-	y = MIN(x, mpy - visibleSize.height / 2);
 
-	Vec2 pointA = Vec2(visibleSize.width / 2, visibleSize.height / 2);
-	Vec2 pointB = Vec2(x, y);
-	Vec2 offset = pointA - pointB;//相当于AB向量
-	this->setPosition(offset);//设置的是Layer的位置,移动层就相当于移动地图
+	Vec2 layerNextPos = this->getPosition() - offset;//层的移动方向和精灵的移动方向相反
+	
+	//防止出现黑边
+	if (layerNextPos.x > 0)//层往右偏移，那么左边就会有黑边
+		layerNextPos.x =0;
+	if (layerNextPos.x < -mpx + visibleSize.width)//层往左偏移，要留下一倍的屏幕宽度
+		layerNextPos.x = -mpx + visibleSize.width;
+	if (layerNextPos.y > 0)//层往上偏移，那么下面就会有黑边
+		layerNextPos.y = 0;
+	if (layerNextPos.y < -mpy + visibleSize.height)//层往下偏移，要留下一倍的屏幕高度
+		layerNextPos.y = -mpy + visibleSize.height;
+
+	//到达边界后要先移动1/2屏幕的距离再滚动屏幕
+	float px = playerSprite->getPositionX();
+	float py = playerSprite->getPositionY();
+	if (px <= visibleSize.width / 2)
+		layerNextPos.x = 0;
+	if (px >= mpx - visibleSize.width / 2)
+		layerNextPos.x = -mpx + visibleSize.width;
+	if (py <= visibleSize.height / 2)
+		layerNextPos.y = 0;
+	if (py >= mpy - visibleSize.height / 2)
+		layerNextPos.y = -mpy + visibleSize.height;
+
+	this->setPosition(layerNextPos);//设置的是Layer的位置,移动层就相当于移动地图
 }
 
