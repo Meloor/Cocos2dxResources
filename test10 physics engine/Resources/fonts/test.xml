@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<dict>
+<key>ch0</key>
+<string>chipmunk</string>
+<key>ch1</key>
+<string>自由落体</string>
+<key>ch2</key>
+<string>碰撞检测</string>
+<key>ch3</key>
+<string>距离关节约束</string>
+<key>ch4</key>
+<string>box2d</string>
+<key>ch5</key>
+<string>自由落体</string>
+<key>ch6</key>
+<string>碰撞检测</string>
+<key>ch7</key>
+<string>距离关节约束</string>
+</dict>
