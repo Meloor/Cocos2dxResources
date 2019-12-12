@@ -77,65 +77,69 @@ bool Scene2::init()
 	label->setPosition(Vec2(visibleSize.width / 2, visibleSize.height - 100));
 	this->addChild(label);
 
-	//物理世界也是一个物体，第一个参数是大小，第二个参数是材质，第三个是厚度，默认为1.0f
-	auto body = PhysicsBody::createEdgeBox(visibleSize, PHYSICSBODY_MATERIAL_DEFAULT, 0.5);
-	auto edgeNode = Node::create();//创建一个游戏中的节点
-	edgeNode->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2));
-	//通过函数将物理世界的形状与游戏中的节点关联起来，同步起来
-	//不需要使用update游戏循环来设置角度和速度等，因为使用了底层封装的物理引擎API
-	edgeNode->setPhysicsBody(body);
-	//edgeNode->setTag(-1);
-	this->addChild(edgeNode);
+	initPhysics();
+	scheduleUpdate();
 
 	return true;
 }
-
-void Scene2::onEnter()
+//游戏循环，代码固定
+void Scene2::update(float dt)
 {
-	Layer::onEnter();
-	lis = EventListenerPhysicsContact::create();
-	lis->onContactBegin = [](PhysicsContact& contact) {
-		log("onContactBegin");
-		auto spA = (Sprite*)contact.getShapeA()->getBody()->getNode();
-		auto spB = (Sprite*)contact.getShapeB()->getBody()->getNode();
-		//if (spA && spA->getTag() == TAG && spB && spB->getTag == TAG) {
-		//if (spA&&spA->getTag() >= 0 && spB&&spB->getTag() >= 0) {
-		if (spA && spB) {//只要和其他物体发生了碰撞，tag的值就+1，tag值大于0就是绿色，等于0就是白色
-			spA->setTag(spA->getTag() + 1);
-			spB->setTag(spB->getTag() + 1);
-			if(spA->getTag()>0)spA->setColor(Color3B::GREEN);
-			if (spA->getTag()>0)spB->setColor(Color3B::GREEN);
+	float timestep = 0.03f;//舍弃dt(不稳定)，设置了一个常量
+	int32 velocityIterations = 8;//速度的迭代
+	int32 positionIterations = 1;//位移的迭代
+
+	world->Step(timestep, velocityIterations, positionIterations);
+	//把物理世界中的所有物体取出来
+	for (b2Body* b = world->GetBodyList(); b; b = b->GetNext()) {
+		if (b->GetUserData() != nullptr) {
+			auto sprite = (Sprite*)b->GetUserData();
+			//物体与精灵位置同步
+			sprite->setPosition(Vec2(b->GetPosition().x*
+				PTM_RATIO, b->GetPosition().y*PTM_RATIO));
+			//物体与精灵的旋转同步，物理世界的物体育精灵的旋转方向是相反的。
+			//弧度转成角度
+			sprite->setRotation(-1 * CC_RADIANS_TO_DEGREES(b->GetAngle()));
 		}
-		return true;
-	};
-	lis->onContactPreSolve = [](PhysicsContact& contact, PhysicsContactPreSolve& solve) {
-		log("onContactPreSolve");
-		return true;
-	};
-	//注意，此函数无返回值
-	lis->onContactPostSolve = [](PhysicsContact& contact,const PhysicsContactPostSolve& solve) {
-		log("onContactPostSolve");
-	};
-	lis->onContactSeparate = [](PhysicsContact& contact) {
-		log("onContactSeparate");
-		auto spA = (Sprite*)contact.getShapeA()->getBody()->getNode();
-		auto spB = (Sprite*)contact.getShapeB()->getBody()->getNode();
-		//if (spA&&spA->getTag() == TAG && spB&&spB->getTag == TAG) {
-		//if (spA&&spA->getTag()>=0 && spB&&spB->getTag() >= 0) {
-		if (spA && spB){
-			spA->setTag(spA->getTag() - 1);
-			spB->setTag(spB->getTag() - 1);
-			if (spA->getTag()<=0)spA->setColor(Color3B::WHITE);
-			if (spB->getTag()<=0)spB->setColor(Color3B::WHITE);
-		}
-	};
-	Director::getInstance()->getEventDispatcher()->addEventListenerWithFixedPriority(lis,1);
+	}
 }
-
-void Scene2::onExit()
+void Scene2::initPhysics()
 {
-	Layer::onExit();
-	Director::getInstance()->getEventDispatcher()->removeEventListener(lis);
+	Size s = Director::getInstance()->getVisibleSize();
+	b2Vec2 gravity;//设置重力
+	gravity.Set(0.0f, -10.0f);
+
+	world = new b2World(gravity);//创建物理世界
+								 //允许物体休眠，物体静止状态时，休眠，需要碰撞检测等时
+								 //才唤醒，以便减少绘制的次数
+	world->SetAllowSleeping(true);
+	world->SetContinuousPhysics(true);//开启连续物理测试
+
+
+	b2BodyDef gBodyDef;//指定物理世界边界
+	gBodyDef.position.Set(0, 0);//创建地面物体结构体
+	b2Body* gBody = world->CreateBody(&gBodyDef);//创建地面物体
+	b2EdgeShape gBox;//定义个有边的形状
+
+					 //定义底部，物理世界为米，因此需要进行转换
+	gBox.Set(b2Vec2(0, 0), b2Vec2(s.width / PTM_RATIO, 0));
+	//使用夹 具固定形状到物体，参数1是形状，参数2是密度，
+	//下边无需考虑重量，所以设置为0;
+	gBody->CreateFixture(&gBox, 0);
+
+	//定义项部
+	gBox.Set(b2Vec2(0, s.height / PTM_RATIO), b2Vec2(s.width / PTM_RATIO, s.height / PTM_RATIO));
+	gBody->CreateFixture(&gBox, 0);
+	//左边
+	gBox.Set(b2Vec2(0, 0), b2Vec2(0, s.height / PTM_RATIO));
+	gBody->CreateFixture(&gBox, 0);
+	//右边
+	gBox.Set(b2Vec2(s.width / PTM_RATIO, 0), b2Vec2(s.width / PTM_RATIO, s.height / PTM_RATIO));
+	gBody->CreateFixture(&gBox, 0);
+
+	//创建碰撞监听器
+	lis = new ContactListener();
+	world->SetContactListener(lis);
 }
 
 bool Scene2::onTouchBegan(Touch * touch, Event * event)
@@ -147,18 +151,30 @@ bool Scene2::onTouchBegan(Touch * touch, Event * event)
 
 void Scene2::addNewSpriteAtPos(Vec2 pos)
 {
-	auto sp = Sprite::create("BoxA2.png");
-	sp->setTag(0);//把标签放进去为了判断是否是该物体碰撞??好像没有关系
-	auto body = PhysicsBody::createBox(sp->getContentSize());
-
-	//开启碰撞检测必须设置Bitmask掩码
-	//是否进行碰撞检测要看Bitmask掩码，掩码进行“位与”运算 ，如果结果是非零
-	//则两个物体可以碰撞，否则不能碰撞，默认值是0x1
-	body->setContactTestBitmask(0x1);//a,b物体是同一种，所以位与结果不为零
-
-	sp->setPhysicsBody(body);
+	//创建精灵
+	auto sp = Sprite::create("boxA2.png");
 	sp->setPosition(pos);
+	sp->setTag(0);
 	this->addChild(sp);
+
+	//动态物体定义
+	b2BodyDef bodyDef;
+	bodyDef.type = b2_dynamicBody;//结构体类型为动态类型
+	bodyDef.position.Set(pos.x / PTM_RATIO, pos.y/PTM_RATIO);
+	b2Body* body = world->CreateBody(&bodyDef);
+	body->SetUserData(sp);//绑定精灵
+
+	b2PolygonShape dynamicBox;//2m的盒子
+	dynamicBox.SetAsBox(1, 1);//边长的一半是1m
+
+	//动态夹具定义
+	b2FixtureDef FixtureDef;
+	FixtureDef.shape = &dynamicBox;//设置夹具形状
+	FixtureDef.density = 1.0f;//设置密度
+	FixtureDef.friction = 0.3f;//摩擦系数
+
+	//将夹具固定到物体上
+	body->CreateFixture(&FixtureDef);
 }
 
 void Scene2::nextMenuCallback(Ref* pSender){
@@ -168,6 +184,12 @@ void Scene2::nextMenuCallback(Ref* pSender){
 void Scene2::backMenuCallback(Ref * pSender)
 {
 	Director::getInstance()->popScene();
+}
+
+Scene2::~Scene2()
+{
+	CC_SAFE_DELETE(world);
+	CC_SAFE_DELETE(lis);
 }
 
 

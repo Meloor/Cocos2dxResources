@@ -27,9 +27,7 @@
 #include "Scene1.h"
 #include "Scene2.h"
 #include "Scene3.h"
-#include "Scene4.h"
-#include "Scene5.h"
-#include "Scene6.h"
+
 USING_NS_CC;
 
 Scene* HelloWorld::createScene()
@@ -62,21 +60,19 @@ bool HelloWorld::init()
 
 	//中文菜单
 	auto dic = Dictionary::createWithContentsOfFile("fonts/test.xml");
-	MenuItemLabel* item[8];
-	for (int i = 0; i < 8; i++) {
-		auto str_en = String::createWithFormat("ch%d", i);
+	MenuItemLabel* item[3];
+	for (int i = 0; i < 3; i++) {
+		auto str_en = String::createWithFormat("ch%d", i+1);
 		auto str_ch = (String*)(dic->objectForKey(str_en->getCString()));
 		auto label = Label::create();
 		label->setString(str_ch->getCString());
 		label->setSystemFontSize(40);
 		item[i] = MenuItemLabel::create(label,
 			CC_CALLBACK_1(HelloWorld::nextMenuCallback, this));
-		item[i]->setTag(i);
+		item[i]->setTag(i+1);
 	}
-	auto mn = Menu::create(item[0], item[1], item[2],item[3],item[4],item[5],item[6],item[7], NULL);
-	mn->alignItemsInRows(4,4, NULL);
-	//mn->alignItemsInColumns(2,2,2,2, NULL);//前面的数字表示每行的列数，
-	mn->setPosition(Vec2(visibleSize.width / 2, visibleSize.height*7/8));
+	auto mn = Menu::create(item[0], item[1], item[2], NULL);
+	mn->alignItemsVertically();
 	this->addChild(mn);
 
 	return true;
@@ -86,27 +82,15 @@ void HelloWorld::nextMenuCallback(Ref* pSender){
 	MenuItemFont* item = (MenuItemFont*)pSender;
 	Scene* scene;
 	switch (item->getTag()) {
-	case 0:
-		log("chipmunk"); break;
 	case 1:
 		scene = Scene1::createScene(); break;
 	case 2:
 		scene = Scene2::createScene(); break;
 	case 3:
 		scene = Scene3::createScene(); break;
-	case 4:
-		log("box2d"); break;
-	case 5:
-		scene = Scene4::createScene(); break;
-	case 6:
-		scene = Scene5::createScene(); break;
-	case 7:
-		scene = Scene6::createScene(); break;
 	}
-	if (item->getTag() != 0 && item->getTag() != 4) {
-		auto reScene = TransitionJumpZoom::create(1.0f, scene);
-		Director::getInstance()->pushScene(reScene);
-	}	
+	auto reScene = TransitionJumpZoom::create(1.0f, scene);
+	Director::getInstance()->pushScene(reScene);	
 }
 
 void HelloWorld::backMenuCallback(Ref * pSender)

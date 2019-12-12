@@ -22,18 +22,18 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include "Scene1.h"
+#include "HelloWorldScene.h"
 #include "SimpleAudioEngine.h"
+#include "Scene1.h"
+#include "Scene2.h"
+#include "Scene3.h"
 
 USING_NS_CC;
 
-Scene* Scene1::createScene()
+Scene* HelloWorld::createScene()
 {
-	//auto scene = Scene::create();
-	auto scene = Scene::createWithPhysics();
-	auto layer = Scene1::create();
-	//开启物理世界的调试debud,可以看到红色的边缘，测试功能
-	scene->getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
+	auto scene = Scene::create();
+	auto layer = HelloWorld::create();
 	scene->addChild(layer);
     return scene;
 }
@@ -46,7 +46,7 @@ static void problemLoading(const char* filename)
 }
 
 // on "init" you need to initialize your instance
-bool Scene1::init()
+bool HelloWorld::init()
 {
     //////////////////////////////
     // 1. super init first
@@ -58,64 +58,44 @@ bool Scene1::init()
     Size visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin =  Director::getInstance()->getVisibleOrigin();
 
-	setTouchEnabled(true);//开启层触摸事件
-	setTouchMode(Touch::DispatchMode::ONE_BY_ONE);//单点触摸
-	
+	//中文菜单
 	auto dic = Dictionary::createWithContentsOfFile("fonts/test.xml");
-	auto str_en = String::createWithFormat("ch%d", 1);
-	auto str_ch = (String*)(dic->objectForKey(str_en->getCString()));
-	auto label = Label::create();
-	label->setString(str_ch->getCString());
-	label->setSystemFontSize(40);
-	label->setPosition(Vec2(visibleSize.width / 2, visibleSize.height - 100));
-	this->addChild(label);
-	//返回菜单
-	MenuItemFont::setFontName("Arial");
-	MenuItemFont::setFontSize(40);
-	auto backItem = MenuItemFont::create("Back",CC_CALLBACK_1(Scene1::backMenuCallback,this));
-	auto mn = Menu::create(backItem, NULL);
+	MenuItemLabel* item[3];
+	for (int i = 0; i < 3; i++) {
+		auto str_en = String::createWithFormat("ch%d", i+1);
+		auto str_ch = (String*)(dic->objectForKey(str_en->getCString()));
+		auto label = Label::create();
+		label->setString(str_ch->getCString());
+		label->setSystemFontSize(40);
+		item[i] = MenuItemLabel::create(label,
+			CC_CALLBACK_1(HelloWorld::nextMenuCallback, this));
+		item[i]->setTag(i+1);
+	}
+	auto mn = Menu::create(item[0], item[1], item[2], NULL);
 	mn->alignItemsVertically();
-	mn->setPosition(Vec2(visibleSize.width - 70, 40));
 	this->addChild(mn);
 
-	//物理世界也是一个物体，第一个参数是大小，第二个参数是材质，第三个是厚度，默认为1.0f
-	auto body = PhysicsBody::createEdgeBox(visibleSize, PHYSICSBODY_MATERIAL_DEFAULT, 0.5);
-	auto edgeNode = Node::create();//创建一个游戏中的节点
-	edgeNode->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2));
-	//通过函数将物理世界的形状与游戏中的节点关联起来，同步起来
-	//不需要使用update游戏循环来设置角度和速度等，因为使用了底层封装的物理引擎API
-	edgeNode->setPhysicsBody(body);
-	this->addChild(edgeNode);
-
-
 	return true;
 }
 
-bool Scene1::onTouchBegan(Touch * touch, Event * event)
-{
-	Vec2 p2 = touch->getLocation();//获取触摸点的opengl坐标
-	this->addNewSpriteAtPos(p2);
-	return true;
+void HelloWorld::nextMenuCallback(Ref* pSender){
+	MenuItemFont* item = (MenuItemFont*)pSender;
+	Scene* scene;
+	switch (item->getTag()) {
+	case 1:
+		scene = Scene1::createScene(); break;
+	case 2:
+		scene = Scene2::createScene(); break;
+	case 3:
+		scene = Scene3::createScene(); break;
+	}
+	auto reScene = TransitionJumpZoom::create(1.0f, scene);
+	Director::getInstance()->pushScene(reScene);
 }
 
-void Scene1::addNewSpriteAtPos(Vec2 pos)
+void HelloWorld::backMenuCallback(Ref * pSender)
 {
-	auto sp = Sprite::create("Ball.png");
-	//小球的物体世界中的body，大小与小球的某个方向的大小的一半
-	//为保险起见，再-1；确保body放到sp中。
-	auto body = PhysicsBody::createCircle(sp->getContentSize().height / 2 - 1);
-	sp->setPhysicsBody(body);
-	sp->setPosition(pos);
-	this->addChild(sp);
-}
 
-void Scene1::nextMenuCallback(Ref* pSender){
-	
-}
-
-void Scene1::backMenuCallback(Ref * pSender)
-{
-	Director::getInstance()->popScene();
 }
 
 
