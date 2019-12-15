@@ -230,18 +230,24 @@ bool  HelloWorld::doRight() {
 		bool isdo = false;
 		for (int x = 3; x >=0; x--) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子x
-				for (int nx = x - 1; nx>=0; nx--) {//找下一个非空且和x相同的格子
-					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
-						//进行合并操作
-						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-						cardArr[y][nx]->setNumber(0);
-						//增加分数
-						score += cardArr[y][x]->getNumber();
-						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+				for (int nx = x - 1; nx>=0; nx--) {
+					if (cardArr[y][nx] != 0) {
+						if (cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[y][nx]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-						isdo = true;
-						merge_num++;
+							isdo = true;
+							merge_num++;
+						}
+						else {
+							break;
+						}
 					}
+
 				}
 			}
 		}
@@ -272,17 +278,23 @@ bool  HelloWorld::doUp() {
 		for (int y = 0; y < 4; y++) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子y
 				for (int ny = y + 1; ny < 4; ny++) {//找下一个非空且和y相同的格子
-					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
-						//进行合并操作
-						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-						cardArr[ny][x]->setNumber(0);
-						//增加分数
-						score += cardArr[y][x]->getNumber();
-						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+					if (cardArr[ny][x] != 0) {
+						if (cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[ny][x]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-						isdo = true;
-						merge_num++;
+							isdo = true;
+							merge_num++;
+						}else {
+							break;
+						}
 					}
+					
+
 				}
 			}
 		}
@@ -313,17 +325,23 @@ bool  HelloWorld::doDown() {
 		for (int y = 3; y >=0; y--) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子y
 				for (int ny = y - 1; ny >=0; ny--) {//找下一个非空且和y相同的格子
-					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
-						//进行合并操作
-						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-						cardArr[ny][x]->setNumber(0);
-						//增加分数
-						score += cardArr[y][x]->getNumber();
-						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+					if (cardArr[ny][x] != 0) {
+						if (cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[ny][x]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-						isdo = true;
-						merge_num++;
+							isdo = true;
+							merge_num++;
+						}else {
+							break;
+						}
 					}
+					
+
 				}
 			}
 		}
