@@ -31,13 +31,13 @@ USING_NS_CC;
 class HelloWorld : public cocos2d::Layer
 {
 private:
-	Vec2 beginP, endP;
-	CardSprite* cardArr[4][4];
+	Vec2 beginP, endP;//滑动的起点、终点
+	CardSprite* cardArr[4][4];//卡片数组
 	int score;//分数
 	Label* scoreLabel;//分数标签
 	Label* scoreValueLabel;//分数值标签
 private:
-	void createCards(Size size);
+	void createCards(Size size);//添加卡片
 public:
     static cocos2d::Scene* createScene();
     virtual bool init();
@@ -52,7 +52,7 @@ public:
 	bool doDown();
 	//自动卡片生成
 	void autoCreateCardNumber();
-	//游戏是否还能继续运行下去
+	//判断游戏是否还能继续运行下去
 	void doCheckGameOver();
 };
 

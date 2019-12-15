@@ -11,8 +11,9 @@ private:
 	Label* labelCardNumber;//数字标签
 	LayerColor* layerColorBG;//颜色块
 private:
-	void enemyInit(int numbers, int width, int height);
+	void cardInit(int numbers, int width, int height);
 public:
+	//静态函数，用于创建卡片精灵
 	static CardSprite* createCardSprite(int numbers,int width,int height);
 	virtual bool init();
 	CREATE_FUNC(CardSprite);

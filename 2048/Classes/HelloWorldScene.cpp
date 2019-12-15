@@ -55,14 +55,15 @@ bool HelloWorld::init()
 	//添加背景
 	auto  layerColorBG = LayerColor::create(Color4B(180, 170, 160, 255));
 	this->addChild(layerColorBG);
-	//分数标签
+	//中文分数标签
 	auto dic = Dictionary::createWithContentsOfFile("fonts/2048.xml");
 	auto str = (String*)(dic->objectForKey("score"));
 	scoreLabel = Label::createWithTTF(str->getCString(), "fonts/STLITI.ttf", 60);
 	scoreLabel->setPosition(Vec2(visibleSize.width / 5, visibleSize.height - 60));
 	this->addChild(scoreLabel);
 	//分数值标签：
-	scoreValueLabel = Label::createWithTTF(String::createWithFormat("%d",score)->getCString(), "fonts/Marker Felt.ttf", 60);
+	scoreValueLabel = Label::createWithTTF(
+		String::createWithFormat("%d",score)->getCString(), "fonts/Marker Felt.ttf", 60);
 	scoreValueLabel->setPosition(Vec2(visibleSize.width*2/ 5, visibleSize.height - 60));
 	scoreValueLabel->setAnchorPoint(Vec2(0, 0.5));
 	this->addChild(scoreValueLabel);
@@ -74,7 +75,6 @@ bool HelloWorld::init()
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);
 	//添加卡片
 	createCards(visibleSize);
-
 	//生成随机数
 	autoCreateCardNumber();
 	autoCreateCardNumber();
@@ -169,37 +169,32 @@ bool  HelloWorld::doLeft() {
 	
 	
 	*/
-	int merge_num = 0;
-	int move_num = 0;
+	int merge_num = 0;//合并次数
+	int move_num = 0;//移动次数
 	for (int y = 0; y < 4; y++) {//遍历每一行
 		/*
 		x = 0:2222->4022	2248->4048->8008->16000
 		x = 2:4022->4040	
-		x = 0:8000
-		
+		x = 0:8000	
 		*/	
-		bool isdo = false;
-		do{//最多就合并三次，时间复杂度最坏O(16*3);
-			isdo = false;
-			for (int x = 0; x < 4; x++) {
-				if (cardArr[y][x]->getNumber() > 0) {//非空格子x
-					for (int nx = x + 1; nx < 4; nx++) {//找下一个非空且和x相同的格子
-						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
-							//进行合并操作
-							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-							cardArr[y][nx]->setNumber(0);
-							//增加分数
-							score += cardArr[y][x]->getNumber();
-							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+		bool isdo = false;//一次滑动最多合并一次	
+		for (int x = 0; x < 4; x++) {
+			if (cardArr[y][x]->getNumber() > 0) {//非空格子x
+				for (int nx = x + 1; nx < 4; nx++) {//找下一个非空且和x相同的格子
+					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
+						//进行合并操作
+						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+						cardArr[y][nx]->setNumber(0);
+						//增加分数
+						score += cardArr[y][x]->getNumber();
+						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-							isdo = true;
-							merge_num++;
-						}
+						isdo = true;
+						merge_num++;
 					}
 				}
 			}
-		}while (isdo);//如果能合并就继续，不能再合并了就退出
-
+		}
 		//移动
 		/*	从左往右遍历，如果格子a为空，那么从这个格子往右找，直到找到一个非空的格子b，
 			然后a = b, b = 0，继续往右找下一个空的格子。
@@ -217,7 +212,7 @@ bool  HelloWorld::doLeft() {
 			}
 		}
 	}
-	return merge_num>0||move_num>0;//合并或移动过
+	return merge_num>0||move_num>0;//合并或移动过就返回true
 }
 bool  HelloWorld::doRight() {
 	log("go right");
@@ -226,26 +221,23 @@ bool  HelloWorld::doRight() {
 	for (int y = 0; y < 4; y++) {//遍历每一行
 		//合并
 		bool isdo = false;
-		do {//最多就合并三次，时间复杂度最坏O(16*3);
-			isdo = false;
-			for (int x = 3; x >=0; x--) {
-				if (cardArr[y][x]->getNumber() > 0) {//非空格子x
-					for (int nx = x - 1; nx>=0; nx--) {//找下一个非空且和x相同的格子
-						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
-							//进行合并操作
-							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-							cardArr[y][nx]->setNumber(0);
-							//增加分数
-							score += cardArr[y][x]->getNumber();
-							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+		for (int x = 3; x >=0; x--) {
+			if (cardArr[y][x]->getNumber() > 0) {//非空格子x
+				for (int nx = x - 1; nx>=0; nx--) {//找下一个非空且和x相同的格子
+					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
+						//进行合并操作
+						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+						cardArr[y][nx]->setNumber(0);
+						//增加分数
+						score += cardArr[y][x]->getNumber();
+						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-							isdo = true;
-							merge_num++;
-						}
+						isdo = true;
+						merge_num++;
 					}
 				}
 			}
-		} while (isdo);//如果能合并就继续，不能再合并了就退出
+		}
 		//移动
 		for (int x = 3; x >=0; x--) {
 			if (cardArr[y][x]->getNumber() == 0) {//找一个空格
@@ -269,26 +261,25 @@ bool  HelloWorld::doUp() {
 	for (int x = 0; x < 4; x++) {//遍历每一列
 		/*合并*/
 		bool isdo = false;
-		do {//最多就合并三次，时间复杂度最坏O(16*3);
-			isdo = false;
-			for (int y = 0; y < 4; y++) {
-				if (cardArr[y][x]->getNumber() > 0) {//非空格子y
-					for (int ny = y + 1; ny < 4; ny++) {//找下一个非空且和y相同的格子
-						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
-							//进行合并操作
-							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-							cardArr[ny][x]->setNumber(0);
-							//增加分数
-							score += cardArr[y][x]->getNumber();
-							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-							isdo = true;
-							merge_num++;
-						}
+		for (int y = 0; y < 4; y++) {
+			if (cardArr[y][x]->getNumber() > 0) {//非空格子y
+				for (int ny = y + 1; ny < 4; ny++) {//找下一个非空且和y相同的格子
+					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
+						//进行合并操作
+						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+						cardArr[ny][x]->setNumber(0);
+						//增加分数
+						score += cardArr[y][x]->getNumber();
+						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+
+						isdo = true;
+						merge_num++;
 					}
 				}
 			}
-		} while (isdo);//如果能合并就继续，不能再合并了就退出
+		}
+
 		/*移动*/
 		for (int y = 0; y < 4; y++) {
 			if (cardArr[y][x]->getNumber() == 0) {//找一个空格
@@ -312,26 +303,23 @@ bool  HelloWorld::doDown() {
 	for (int x = 0; x < 4; x++) {//遍历每一列
 		//合并
 		bool isdo = false;
-		do {//最多就合并三次，时间复杂度最坏O(16*3);
-			isdo = false;
-			for (int y = 3; y >=0; y--) {
-				if (cardArr[y][x]->getNumber() > 0) {//非空格子y
-					for (int ny = y - 1; ny >=0; ny--) {//找下一个非空且和y相同的格子
-						if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
-							//进行合并操作
-							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-							cardArr[ny][x]->setNumber(0);
-							//增加分数
-							score += cardArr[y][x]->getNumber();
-							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+		for (int y = 3; y >=0; y--) {
+			if (cardArr[y][x]->getNumber() > 0) {//非空格子y
+				for (int ny = y - 1; ny >=0; ny--) {//找下一个非空且和y相同的格子
+					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
+						//进行合并操作
+						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+						cardArr[ny][x]->setNumber(0);
+						//增加分数
+						score += cardArr[y][x]->getNumber();
+						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-							isdo = true;
-							merge_num++;
-						}
+						isdo = true;
+						merge_num++;
 					}
 				}
 			}
-		} while (isdo);//如果能合并就继续，不能再合并了就退出
+		}
 		//移动
 		for (int y = 3;y>=0; y--) {
 			if (cardArr[y][x]->getNumber() == 0) {//找一个空格
@@ -365,9 +353,8 @@ void HelloWorld::autoCreateCardNumber()
 void HelloWorld::doCheckGameOver()
 {
 	bool isGameOver = true;
-
-	//判断每个格子，是否可以和其周边的格子合并，可以，那么游戏可以继续
-	//或者还有空格，游戏可以继续
+	//判断每个格子，还有空格，游戏可以继续
+	//或者可以和其周边的格子合并，可以，那么游戏可以继续
 	for (int y = 0; y < 4; y++) {
 		for (int x = 0; x < 4; x++) {
 			if ((cardArr[y][x]->getNumber() == 0) ||
@@ -378,11 +365,9 @@ void HelloWorld::doCheckGameOver()
 				) {
 				isGameOver = false;
 				break;
-			}
-				
+			}			
 		}
 	}
-
 	if (isGameOver) {//如果游戏结束，就重新加载场景
 		auto scene = HelloWorld::createScene();
 		auto tsc = TransitionFade::create(1, scene);
