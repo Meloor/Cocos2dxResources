@@ -76,19 +76,19 @@ bool HelloWorld::init()
 	//添加卡片
 	createCards(visibleSize);
 	//生成随机数
-	//autoCreateCardNumber();
-	//autoCreateCardNumber();
+	autoCreateCardNumber();
+	autoCreateCardNumber();
 }
 void  HelloWorld::createCards(Size size) {
 	//求出单元格高度
 	float lon = (size.width - 20) / 4;//左右方向多出20像素
 	//布局好card后剩余的高度
 	float rest_height = size.height - lon * 4;
-	int arr[4][4] = {{2,2,4,8},
-					{ 0,2,4,8 },
-					{ 0,2,4,8 },
-					{ 2,4,2,2 }};
-	//int arr[4][4] = {0};
+	//int arr[4][4] = {{2,2,4,8},
+	//				{ 0,2,4,8 },
+	//				{ 0,2,4,8 },
+	//				{ 2,4,2,2 }};
+	int arr[4][4] = {0};
 	//4*4的单元格,（x,y）索引card,同opengl坐标系
 	for (int x = 0; x < 4; x++) {
 		for (int y = 0; y < 4; y++) {
