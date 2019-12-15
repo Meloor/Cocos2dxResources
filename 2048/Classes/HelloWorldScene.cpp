@@ -76,19 +76,19 @@ bool HelloWorld::init()
 	//添加卡片
 	createCards(visibleSize);
 	//生成随机数
-	autoCreateCardNumber();
-	autoCreateCardNumber();
+	//autoCreateCardNumber();
+	//autoCreateCardNumber();
 }
 void  HelloWorld::createCards(Size size) {
 	//求出单元格高度
 	float lon = (size.width - 20) / 4;//左右方向多出20像素
 	//布局好card后剩余的高度
 	float rest_height = size.height - lon * 4;
-	//int arr[4][4] = {{2,2,4,8},
-	//				{ 0,2,4,8 },
-	//				{ 0,2,4,8 },
-	//				{ 0,0,4,8 }};
-	int arr[4][4] = {0};
+	int arr[4][4] = {{2,2,4,8},
+					{ 0,2,4,8 },
+					{ 0,2,4,8 },
+					{ 2,4,2,2 }};
+	//int arr[4][4] = {0};
 	//4*4的单元格,（x,y）索引card,同opengl坐标系
 	for (int x = 0; x < 4; x++) {
 		for (int y = 0; y < 4; y++) {
@@ -180,18 +180,25 @@ bool  HelloWorld::doLeft() {
 		bool isdo = false;//一次滑动最多合并一次	
 		for (int x = 0; x < 4; x++) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子x
-				for (int nx = x + 1; nx < 4; nx++) {//找下一个非空且和x相同的格子
-					if (/*cardArr[y][nx]!=0&&*/cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
-						//进行合并操作
-						cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
-						cardArr[y][nx]->setNumber(0);
-						//增加分数
-						score += cardArr[y][x]->getNumber();
-						scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+				for (int nx = x + 1; nx < 4; nx++) {
+					if (cardArr[y][nx] != 0) {//找下一个非空格子
+						if (cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {//相等
+							//进行合并操作
+							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
+							cardArr[y][nx]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
-						isdo = true;
-						merge_num++;
+							isdo = true;
+							merge_num++;
+						}
+						else {//和它紧靠的非空格子如果和它不想等就不能合并
+							break;
+						}
 					}
+
+					
 				}
 			}
 		}
