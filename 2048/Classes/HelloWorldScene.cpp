@@ -49,12 +49,23 @@ bool HelloWorld::init()
 	{
 		return false;
 	}
-
+	score = 0;//初始化游戏分数
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 	//添加背景
 	auto  layerColorBG = LayerColor::create(Color4B(180, 170, 160, 255));
 	this->addChild(layerColorBG);
+	//分数标签
+	auto dic = Dictionary::createWithContentsOfFile("fonts/2048.xml");
+	auto str = (String*)(dic->objectForKey("score"));
+	scoreLabel = Label::createWithTTF(str->getCString(), "fonts/STLITI.ttf", 60);
+	scoreLabel->setPosition(Vec2(visibleSize.width / 5, visibleSize.height - 60));
+	this->addChild(scoreLabel);
+	//分数值标签：
+	scoreValueLabel = Label::createWithTTF(String::createWithFormat("%d",score)->getCString(), "fonts/Marker Felt.ttf", 60);
+	scoreValueLabel->setPosition(Vec2(visibleSize.width*2/ 5, visibleSize.height - 60));
+	scoreValueLabel->setAnchorPoint(Vec2(0, 0.5));
+	this->addChild(scoreValueLabel);
 	//添加触摸绑定事件
 	auto touchListener = EventListenerTouchOneByOne::create();
 	touchListener->setSwallowTouches(true);
@@ -107,22 +118,31 @@ void  HelloWorld::onTouchEnded(Touch *touch, Event *unused_event) {
 	//如果x方向上的移动距离大于y方向上的移动距离，则是左右移动，否则上下移动
 	if (abs(endX) > abs(endY)) {
 		if (endX + 5 > 0) {//first在end右边，向左滑
-			if(doLeft())
+			if (doLeft()) {//return了true表示发生了移动或者合并，这时才要生成随机数
 				autoCreateCardNumber();
+				doCheckGameOver();
+			}
 		}
 		else {
-			if(doRight())
+			if(doRight()){
 				autoCreateCardNumber();
+				doCheckGameOver();
+			}
 		}
 	}
 	else {//opengl坐标系原点在左下角,越往上坐标越大
 		if (endY + 5 > 0) {//first在end的上边，向下滑，这里为什么要+5？？？
-			if(doDown())
+			if (doDown()) {
 				autoCreateCardNumber();
+				doCheckGameOver();
+			}
+				
 		}
 		else {
-			if(doUp())
+			if(doUp()){
 				autoCreateCardNumber();
+				doCheckGameOver();
+			}
 		}
 	}
 }
@@ -166,6 +186,10 @@ bool  HelloWorld::doLeft() {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
 							cardArr[y][nx]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+
 							isdo = true;
 							isdo_num++;
 						}
@@ -207,6 +231,10 @@ bool  HelloWorld::doRight() {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
 							cardArr[y][nx]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+
 							isdo = true;
 							isdo_num++;
 						}
@@ -244,6 +272,10 @@ bool  HelloWorld::doUp() {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
 							cardArr[ny][x]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+
 							isdo = true;
 							isdo_num++;
 						}
@@ -281,6 +313,10 @@ bool  HelloWorld::doDown() {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
 							cardArr[ny][x]->setNumber(0);
+							//增加分数
+							score += cardArr[y][x]->getNumber();
+							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
+
 							isdo = true;
 							isdo_num++;
 						}
@@ -304,7 +340,7 @@ bool  HelloWorld::doDown() {
 	return true;
 }
 
-void HelloWorld::autoCreateCardNumber()
+void HelloWorld::autoCreateCardNumber()//如果格子被占满了就会陷入死循环
 {
 	int y, x;
 	do {
@@ -315,4 +351,32 @@ void HelloWorld::autoCreateCardNumber()
 	} while (cardArr[y][x]->getNumber() > 0);//如果改格子非空就继续随机下一个点
 
 	cardArr[y][x]->setNumber(CCRANDOM_0_1() * 10 < 1 ? 4 : 2);//4的概率约10%
+}
+
+void HelloWorld::doCheckGameOver()
+{
+	bool isGameOver = true;
+
+	//判断每个格子，是否可以和其周边的格子合并，可以，那么游戏可以继续
+	//或者还有空格，游戏可以继续
+	for (int y = 0; y < 4; y++) {
+		for (int x = 0; x < 4; x++) {
+			if ((cardArr[y][x]->getNumber() == 0) ||
+				(y-1 >= 0 && (cardArr[y][x]->getNumber() == cardArr[y - 1][x]->getNumber())) ||
+				(y+1 <= 3 && (cardArr[y][x]->getNumber() == cardArr[y + 1][x]->getNumber())) ||
+				(x-1 >= 0 && (cardArr[y][x]->getNumber() == cardArr[y][x - 1]->getNumber())) ||
+				(x+1 <= 3 && (cardArr[y][x]->getNumber() == cardArr[y][x + 1]->getNumber()))
+				) {
+				isGameOver = false;
+				break;
+			}
+				
+		}
+	}
+
+	if (isGameOver) {//如果游戏结束，就重新加载场景
+		auto scene = HelloWorld::createScene();
+		auto tsc = TransitionFade::create(1, scene);
+		Director::getInstance()->replaceScene(tsc);
+	}
 }

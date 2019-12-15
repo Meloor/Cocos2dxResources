@@ -41,6 +41,35 @@ int CardSprite::getNumber() {
 void CardSprite::setNumber(int num) {
 	number = num;
 
+	//根据数字的大小来调整字体的大小
+	if (number >= 0)
+		labelCardNumber->setSystemFontSize(90);
+	if(number>= 10)
+		labelCardNumber->setSystemFontSize(70);
+	if(number>=100)
+		labelCardNumber->setSystemFontSize(50);
+	if(number>=1000)
+		labelCardNumber->setSystemFontSize(30);
+
+	//根据数字大小来调整颜色
+	switch (number)
+	{
+	case 0:layerColorBG->setColor(Color3B(200, 190, 180)); break;
+	case 2:layerColorBG->setColor(Color3B(240, 230, 220)); break;
+	case 4:layerColorBG->setColor(Color3B(240, 220, 200)); break;
+	case 8:layerColorBG->setColor(Color3B(240, 180, 120)); break;
+	case 16:layerColorBG->setColor(Color3B(240, 140, 90)); break;
+	case 32:layerColorBG->setColor(Color3B(240, 120, 90)); break;
+	case 64:layerColorBG->setColor(Color3B(240, 90, 60)); break;
+	case 128:layerColorBG->setColor(Color3B(240, 90, 60)); break;
+	case 256:layerColorBG->setColor(Color3B(240, 200, 70)); break;
+	case 512:layerColorBG->setColor(Color3B(240, 200, 70)); break;
+	case 1024:layerColorBG->setColor(Color3B(0, 130, 0)); break;
+	case 2048:layerColorBG->setColor(Color3B(0, 130, 0)); break;
+	default:
+		break;
+	}
+
 	//更新显示的数字
 	if (number > 0) {
 		labelCardNumber->setString(String::createWithFormat("%i", number)->getCString());

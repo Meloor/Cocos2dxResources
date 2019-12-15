@@ -36,6 +36,9 @@ private:
 	int endX;
 	int endY;
 	CardSprite* cardArr[4][4];
+	int score;//分数
+	Label* scoreLabel;//分数标签
+	Label* scoreValueLabel;//分数值标签
 private:
 	void createCards(Size size);
 public:
@@ -52,6 +55,8 @@ public:
 	bool doDown();
 	//自动卡片生成
 	void autoCreateCardNumber();
+	//游戏是否还能继续运行下去
+	void doCheckGameOver();
 };
 
 #endif // __HELLOWORLD_SCENE_H__
