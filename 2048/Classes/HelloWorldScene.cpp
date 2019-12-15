@@ -105,25 +105,26 @@ void  HelloWorld::createCards(Size size) {
 }
 
 bool  HelloWorld::onTouchBegan(Touch *touch, Event *unused_event) {
-	Point touchP0 = touch->getLocation();
-	firstX = touchP0.x;
-	firstY = touchP0.y;
+	beginP = touch->getLocation();
 	return true;
 }
 void  HelloWorld::onTouchEnded(Touch *touch, Event *unused_event) {
-	Point touchP0 = touch->getLocation();
-	endX = firstX - touchP0.x;
-	endY = firstY - touchP0.y;
-	
+	endP = touch->getLocation();
+
+	Vec2 chaP = beginP - endP;//起点减去终点
+	float chaX = chaP.x;
+	float chaY = chaP.y;
+	float minDistance = 5;//最小距离，灵敏度
+
 	//如果x方向上的移动距离大于y方向上的移动距离，则是左右移动，否则上下移动
-	if (abs(endX) > abs(endY)) {
-		if (endX + 5 > 0) {//first在end右边，向左滑
-			if (doLeft()) {//return了true表示发生了移动或者合并，这时才要生成随机数
+	if (abs(chaX) > abs(chaY)) {
+		if (chaX  > minDistance) {//begin在end右边，向左滑
+			if (doLeft()) {//return了true表示发生了移动或者合并(表示还有空格)，这时才要生成随机数
 				autoCreateCardNumber();
 				doCheckGameOver();
 			}
 		}
-		else {
+		else if(chaX < -minDistance){
 			if(doRight()){
 				autoCreateCardNumber();
 				doCheckGameOver();
@@ -131,14 +132,14 @@ void  HelloWorld::onTouchEnded(Touch *touch, Event *unused_event) {
 		}
 	}
 	else {//opengl坐标系原点在左下角,越往上坐标越大
-		if (endY + 5 > 0) {//first在end的上边，向下滑，这里为什么要+5？？？
+		if (chaY  > minDistance) {//first在end的上边，向下滑
 			if (doDown()) {
 				autoCreateCardNumber();
 				doCheckGameOver();
 			}
 				
 		}
-		else {
+		else if(chaY < -minDistance){
 			if(doUp()){
 				autoCreateCardNumber();
 				doCheckGameOver();
@@ -168,7 +169,8 @@ bool  HelloWorld::doLeft() {
 	
 	
 	*/
-	int isdo_num = 0;
+	int merge_num = 0;
+	int move_num = 0;
 	for (int y = 0; y < 4; y++) {//遍历每一行
 		/*
 		x = 0:2222->4022	2248->4048->8008->16000
@@ -191,7 +193,7 @@ bool  HelloWorld::doLeft() {
 							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
 							isdo = true;
-							isdo_num++;
+							merge_num++;
 						}
 					}
 				}
@@ -208,17 +210,19 @@ bool  HelloWorld::doLeft() {
 					if (cardArr[y][nx]->getNumber() > 0) {//找一个非空
 						cardArr[y][x]->setNumber(cardArr[y][nx]->getNumber());
 						cardArr[y][nx]->setNumber(0);
+						move_num++;
 						break;//空格被填充后直接break
 					}
 				}
 			}
 		}
 	}
-	return isdo_num>0;//合并过
+	return merge_num>0||move_num>0;//合并或移动过
 }
 bool  HelloWorld::doRight() {
 	log("go right");
-	int isdo_num = 0;
+	int merge_num = 0;
+	int move_num = 0;
 	for (int y = 0; y < 4; y++) {//遍历每一行
 		//合并
 		bool isdo = false;
@@ -236,7 +240,7 @@ bool  HelloWorld::doRight() {
 							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
 							isdo = true;
-							isdo_num++;
+							merge_num++;
 						}
 					}
 				}
@@ -249,17 +253,19 @@ bool  HelloWorld::doRight() {
 					if (cardArr[y][nx]->getNumber() > 0) {//找一个非空
 						cardArr[y][x]->setNumber(cardArr[y][nx]->getNumber());
 						cardArr[y][nx]->setNumber(0);
+						move_num++;
 						break;//空格被填充后直接break
 					}
 				}
 			}
 		}
 	}
-	return true;
+	return merge_num>0 || move_num>0;
 }
 bool  HelloWorld::doUp() {
 	log("go up");
-	int isdo_num = 0;
+	int merge_num = 0;
+	int move_num = 0;
 	for (int x = 0; x < 4; x++) {//遍历每一列
 		/*合并*/
 		bool isdo = false;
@@ -277,7 +283,7 @@ bool  HelloWorld::doUp() {
 							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
 							isdo = true;
-							isdo_num++;
+							merge_num++;
 						}
 					}
 				}
@@ -290,17 +296,19 @@ bool  HelloWorld::doUp() {
 					if (cardArr[ny][x]->getNumber() > 0) {//找一个非空
 						cardArr[y][x]->setNumber(cardArr[ny][x]->getNumber());
 						cardArr[ny][x]->setNumber(0);
+						move_num++;
 						break;//空格被填充后直接break
 					}
 				}
 			}
 		}
 	}
-	return true;
+	return merge_num>0 || move_num>0;
 }
 bool  HelloWorld::doDown() {
 	log("go down");
-	int isdo_num = 0;
+	int merge_num = 0;
+	int move_num = 0;
 	for (int x = 0; x < 4; x++) {//遍历每一列
 		//合并
 		bool isdo = false;
@@ -318,7 +326,7 @@ bool  HelloWorld::doDown() {
 							scoreValueLabel->setString(String::createWithFormat("%d", score)->getCString());
 
 							isdo = true;
-							isdo_num++;
+							merge_num++;
 						}
 					}
 				}
@@ -331,16 +339,17 @@ bool  HelloWorld::doDown() {
 					if (cardArr[ny][x]->getNumber() > 0) {//找一个非空
 						cardArr[y][x]->setNumber(cardArr[ny][x]->getNumber());
 						cardArr[ny][x]->setNumber(0);
+						move_num++;
 						break;//空格被填充后直接break
 					}
 				}
 			}
 		}
 	}
-	return true;
+	return merge_num>0||move_num>0;
 }
-
-void HelloWorld::autoCreateCardNumber()//如果格子被占满了就会陷入死循环
+//如果格子被占满了还生成就会陷入死循环，所以应该在合并过或移动过（表示有空格）后才能随机生成数字
+void HelloWorld::autoCreateCardNumber()
 {
 	int y, x;
 	do {

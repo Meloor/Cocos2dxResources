@@ -31,10 +31,7 @@ USING_NS_CC;
 class HelloWorld : public cocos2d::Layer
 {
 private:
-	int firstX;
-	int firstY;
-	int endX;
-	int endY;
+	Vec2 beginP, endP;
 	CardSprite* cardArr[4][4];
 	int score;//分数
 	Label* scoreLabel;//分数标签
