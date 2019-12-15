@@ -84,10 +84,10 @@ void  HelloWorld::createCards(Size size) {
 	float lon = (size.width - 20) / 4;//左右方向多出20像素
 	//布局好card后剩余的高度
 	float rest_height = size.height - lon * 4;
-	//int arr[4][4] = {{2,2,4,8},
-	//				{ 0,2,4,8 },
-	//				{ 0,2,4,8 },
-	//				{ 2,4,2,2 }};
+	//int arr[4][4] = {{0,0,0,0},
+	//				{ 0,0,0,0 },
+	//				{ 2,0,0,2 },
+	//				{ 4,2,0,2 }};
 	int arr[4][4] = {0};
 	//4*4的单元格,（x,y）索引card,同opengl坐标系
 	for (int x = 0; x < 4; x++) {
@@ -176,12 +176,15 @@ bool  HelloWorld::doLeft() {
 		x = 0:2222->4022	2248->4048->8008->16000
 		x = 2:4022->4040	
 		x = 0:8000	
+
+		4202
+		2002
 		*/	
 		bool isdo = false;//一次滑动最多合并一次	
 		for (int x = 0; x < 4; x++) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子x
 				for (int nx = x + 1; nx < 4; nx++) {
-					if (cardArr[y][nx] != 0) {//找下一个非空格子
+					if (cardArr[y][nx]->getNumber() > 0) {//找下一个非空格子
 						if (cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {//相等
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
@@ -196,9 +199,7 @@ bool  HelloWorld::doLeft() {
 						else {//和它紧靠的非空格子如果和它不想等就不能合并
 							break;
 						}
-					}
-
-					
+					}				
 				}
 			}
 		}
@@ -231,7 +232,7 @@ bool  HelloWorld::doRight() {
 		for (int x = 3; x >=0; x--) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子x
 				for (int nx = x - 1; nx>=0; nx--) {
-					if (cardArr[y][nx] != 0) {
+					if (cardArr[y][nx]->getNumber() > 0) {
 						if (cardArr[y][x]->getNumber() == cardArr[y][nx]->getNumber()) {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
@@ -278,7 +279,7 @@ bool  HelloWorld::doUp() {
 		for (int y = 0; y < 4; y++) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子y
 				for (int ny = y + 1; ny < 4; ny++) {//找下一个非空且和y相同的格子
-					if (cardArr[ny][x] != 0) {
+					if (cardArr[ny][x]->getNumber() > 0) {
 						if (cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
@@ -325,7 +326,7 @@ bool  HelloWorld::doDown() {
 		for (int y = 3; y >=0; y--) {
 			if (cardArr[y][x]->getNumber() > 0) {//非空格子y
 				for (int ny = y - 1; ny >=0; ny--) {//找下一个非空且和y相同的格子
-					if (cardArr[ny][x] != 0) {
+					if (cardArr[ny][x]->getNumber() > 0) {
 						if (cardArr[y][x]->getNumber() == cardArr[ny][x]->getNumber()) {
 							//进行合并操作
 							cardArr[y][x]->setNumber(cardArr[y][x]->getNumber() * 2);
