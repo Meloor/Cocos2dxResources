@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<dict>
+<key>ch1</key>
+<string>Array</string>
+<key>ch2</key>
+<string>Vector</string>
+<key>ch3</key>
+<string>Dictionary</string>
+<key>ch4</key>
+<string>Map</string>
+<key>ch5</key>
+<string>ValueVector</string>
+<key>ch6</key>
+<string>ValueMap</string>
+</dict>
